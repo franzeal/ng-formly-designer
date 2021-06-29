@@ -41,7 +41,9 @@ import 'jquery';
     FormlyModule.forChild()
   ],
   exports: [
-    FormlyDesignerComponent
+    FieldEditorComponent,
+    FormlyDesignerComponent,
+    WrapperEditorComponent
   ],
   providers: [
     Config,

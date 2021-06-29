@@ -1,10 +1,15 @@
 import { Injectable } from '@angular/core';
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { FormlyConfig, FormlyFieldConfig } from '@ngx-formly/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { FieldsService } from './fields.service';
 import { DESIGNER_WRAPPER_TYPES, FormlyDesignerConfig } from './formly-designer-config';
 import { cloneDeep, get, isArray, isEmpty, isFunction, isString, set, unset } from './util';
+
+export enum FieldType {
+  Plain,
+  Designer
+}
 
 @Injectable()
 export class FormlyDesignerService {
@@ -15,7 +20,9 @@ export class FormlyDesignerService {
   ) { }
 
   private readonly _disabled = new BehaviorSubject<boolean>(false);
+  private readonly _designerFields = new BehaviorSubject<FormlyFieldConfig[]>([]);
   private readonly _fields = new BehaviorSubject<FormlyFieldConfig[]>([]);
+  private readonly _fieldClicked = new Subject<FormlyFieldConfig>();
   private readonly _model = new BehaviorSubject<any>({});
 
   get disabled(): boolean {
@@ -30,6 +37,27 @@ export class FormlyDesignerService {
     return this._disabled.asObservable();
   }
 
+  get fieldClicked$(): Observable<FormlyFieldConfig> {
+    return this._fieldClicked.asObservable();
+  }
+
+  get designerFields(): FormlyFieldConfig[] {
+    return this._designerFields.value;
+  }
+
+  set designerFields(value: FormlyFieldConfig[]) {
+    // Prune the fields because ngx-formly pollutes them with internal state
+    // causing incorrect behavior when re-applied.
+    const fields = isArray(value) ? cloneDeep(value) : [];
+    const designerFields = this.createPrunedFields(fields, FieldType.Designer);
+    this._designerFields.next(designerFields);
+    this._fields.next(this.createPrunedFields(cloneDeep(designerFields), FieldType.Plain));
+  }
+
+  get designerFields$(): Observable<FormlyFieldConfig[]> {
+    return this._designerFields.asObservable();
+  }
+
   get fields(): FormlyFieldConfig[] {
     return this._fields.value;
   }
@@ -37,8 +65,11 @@ export class FormlyDesignerService {
   set fields(value: FormlyFieldConfig[]) {
     // Prune the fields because ngx-formly pollutes them with internal state
     // causing incorrect behavior when re-applied.
-    const fields = this.createPrunedFields(isArray(value) ? value : []);
-    this._fields.next(fields);
+    const fields = cloneDeep(value);
+    const designerFields = this.createPrunedFields(fields, FieldType.Designer);
+    this.fieldsService.mutateFields(designerFields, false);
+    this._designerFields.next(designerFields);
+    this._fields.next(this.createPrunedFields(cloneDeep(designerFields), FieldType.Plain));
   }
 
   get fields$(): Observable<FormlyFieldConfig[]> {
@@ -60,65 +91,40 @@ export class FormlyDesignerService {
   addField(field: FormlyFieldConfig): void {
     this.fieldsService.mutateField(field, false);
 
-    const fields = cloneDeep(this.fields);
+    const fields = cloneDeep(this.designerFields);
     fields.push(field);
 
-    this.fields = fields;
+    this.designerFields = fields;
     this.model = cloneDeep(this.model);
+  }
+
+  didClickField(value: FormlyFieldConfig) {
+    this._fieldClicked.next(value);
   }
 
   removeField(field: FormlyFieldConfig): void {
     this.unsetField(field);
-    if (this.replaceField(this.fields, field, undefined)) {
+    const designerId = field.templateOptions?.$designerId;
+    if (this.replaceField(designerId, null, this.designerFields)) {
       this.removeControl(field.formControl);
     }
 
-    this.fields = cloneDeep(this.fields);
+    this.designerFields = cloneDeep(this.designerFields);
     this.model = cloneDeep(this.model);
   }
 
   updateField(original: FormlyFieldConfig, modified: FormlyFieldConfig): void {
     const pruned = this.fieldsService.mutateField(this.createPrunedField(modified), false);
-
-    if (this.replaceField(this.fields, original, pruned)) {
+    const designerId = original.templateOptions?.$designerId;
+    if (this.replaceField(designerId, pruned, this.designerFields)) {
       if (original.formControl !== pruned.formControl) {
         this.unsetField(original);
         this.removeControl(original.formControl);
       }
 
-      this.fields = cloneDeep(this.fields);
+      this.designerFields = cloneDeep(this.designerFields);
       this.model = cloneDeep(this.model);
     }
-  }
-
-  convertField(field: FormlyFieldConfig): FormlyFieldConfig {
-    return this.createPrunedField(field);
-  }
-
-  convertFields(fields: FormlyFieldConfig[]): FormlyFieldConfig[] {
-    return this.createPrunedFields(fields);
-  }
-
-  createDesignerFields(): FormlyFieldConfig[] {
-    return this.createPrunedFields(this.fields);
-  }
-
-  private createPrunedFields(fields: FormlyFieldConfig[]): FormlyFieldConfig[] {
-    const prunedFields: FormlyFieldConfig[] = [];
-    if (isArray(fields)) {
-      fields.forEach(field => {
-        const pruned = this.createPrunedField(field);
-        if (field.fieldArray) {
-          pruned.fieldArray = this.createPrunedField(field.fieldArray);
-        } else if (field.fieldGroup && !pruned.fieldArray) {
-          pruned.fieldGroup = this.createPrunedFields(field.fieldGroup);
-        }
-        if (Object.keys(pruned).length > 0) {
-          prunedFields.push(pruned);
-        }
-      });
-    }
-    return prunedFields;
   }
 
   getWrappers(field: FormlyFieldConfig): string[] {
@@ -154,24 +160,27 @@ export class FormlyDesignerService {
     return wrappers;
   }
 
-  /** Prunes the field of paths not identified in the designer config */
-  private createPrunedField(field: FormlyFieldConfig): FormlyFieldConfig {
+  /** Prunes field of unrecognized properties */
+  createPrunedField(field: FormlyFieldConfig, fieldType = FieldType.Designer): FormlyFieldConfig {
     const type = get(field, 'templateOptions.$fieldArray.type', field.type);
     const designerType = this.designerConfig.types[type];
     const pruned: FormlyFieldConfig = isEmpty(field.key) ? {} : { key: field.key };
 
     if (designerType) {
       pruned.type = type;
+      if (fieldType === FieldType.Designer && field.templateOptions?.$designerId) {
+        pruned.templateOptions = { $designerId: field.templateOptions.$designerId };
+      }
       this.applyProperties(field, pruned, designerType.fields);
       if (designerType.fieldArray) {
         pruned.fieldArray = {
-          fieldGroup: this.createPrunedFields(field.fieldGroup)
+          fieldGroup: this.createPrunedFields(field.fieldGroup, fieldType)
         };
       }
     }
 
     if (isArray(field.fieldGroup) && !isArray(pruned.fieldArray)) {
-      pruned.fieldGroup = this.createPrunedFields(field.fieldGroup);
+      pruned.fieldGroup = this.createPrunedFields(field.fieldGroup, fieldType);
 
       let fieldGroupClassName: string;
       if (isString(field.fieldGroupClassName) && (fieldGroupClassName = field.fieldGroupClassName.trim()).length > 0) {
@@ -195,6 +204,25 @@ export class FormlyDesignerService {
     return pruned;
   }
 
+  /** Prunes fields of unrecognized properties */
+  createPrunedFields(fields: FormlyFieldConfig[], fieldType = FieldType.Designer): FormlyFieldConfig[] {
+    const prunedFields: FormlyFieldConfig[] = [];
+    if (isArray(fields)) {
+      fields.forEach(field => {
+        const pruned = this.createPrunedField(field, fieldType);
+        if (field.fieldArray) {
+          pruned.fieldArray = this.createPrunedField(field.fieldArray, fieldType);
+        } else if (field.fieldGroup && !pruned.fieldArray) {
+          pruned.fieldGroup = this.createPrunedFields(field.fieldGroup, fieldType);
+        }
+        if (Object.keys(pruned).length > 0) {
+          prunedFields.push(pruned);
+        }
+      });
+    }
+    return prunedFields;
+  }
+
   private applyProperties(field: FormlyFieldConfig, designed: FormlyFieldConfig, designerFields: FormlyFieldConfig[]): void {
     if (isArray(designerFields)) {
       designerFields.forEach(designerField => {
@@ -206,40 +234,43 @@ export class FormlyDesignerService {
     }
   }
 
-  private replaceField(fields: FormlyFieldConfig[], original: FormlyFieldConfig, modified: FormlyFieldConfig): boolean {
-    if (isArray(fields)) {
-      const l = fields.length;
-      for (let i = 0; i < l; i++) {
-        const field = fields[i];
-        if (field === original) {
-          if (modified == null) {
-            fields.splice(i, 1);
-          } else {
-            fields[i] = modified;
-          }
-          return true;
+  private replaceField(id: string, field: FormlyFieldConfig, fields: FormlyFieldConfig[]): boolean {
+    if (!id || !isArray(fields)) {
+      return false;
+    }
+    for (let i = 0, l = fields.length; i < l; i++) {
+      const otherField = fields[i];
+      if (otherField.templateOptions.$designerId === field.templateOptions.$designerId) {
+        if (field == null) {
+          fields.splice(i, 1);
+        } else {
+          fields[i] = field;
         }
-        if (field.fieldGroup && this.replaceField(field.fieldGroup, original, modified)) {
-          return true;
-        }
-        if (field.fieldArray && this.replaceFieldArray(field, original, modified)) {
-          return true;
-        }
+        return true;
+      }
+      if (otherField.fieldGroup && this.replaceField(id, field, otherField.fieldGroup)) {
+        return true;
+      }
+      if (otherField.fieldArray && this.replaceFieldArray(id, field, otherField)) {
+        return true;
       }
     }
     return false;
   }
 
-  private replaceFieldArray(parent: FormlyFieldConfig, original: FormlyFieldConfig, modified: FormlyFieldConfig): boolean {
+  private replaceFieldArray(id: string, field: FormlyFieldConfig, parent: FormlyFieldConfig): boolean {
+    if (!id) {
+      return false;
+    }
     const fieldArray = parent.fieldArray;
-    if (fieldArray === original) {
-      parent.fieldArray = modified;
+    if (fieldArray.templateOptions?.$designerId === id) {
+      parent.fieldArray = field;
       return true;
     }
-    if (fieldArray.fieldGroup && this.replaceField(fieldArray.fieldGroup, original, modified)) {
+    if (fieldArray.fieldGroup && this.replaceField(id, field, fieldArray.fieldGroup)) {
       return true;
     }
-    return fieldArray.fieldArray && this.replaceFieldArray(fieldArray, original, modified);
+    return fieldArray.fieldArray && this.replaceFieldArray(id, field, fieldArray);
   }
 
   private buildPath(key: string, path: string, arrayNext: boolean = false) {

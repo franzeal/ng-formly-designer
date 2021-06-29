@@ -14,27 +14,30 @@ import { designerConfig } from './designer-config';
 
 import { AppComponent } from './app.component';
 import { ExpanderComponent } from './components/expander.component';
+import { PropertiesComponent } from './components/properties.component';
+import { FieldsService, FormlyDesignerService } from 'ngx-formly-designer';
 
 @NgModule({
-    declarations: [
-        AppComponent,
-        ExpanderComponent,
+  declarations: [
+    AppComponent,
+    ExpanderComponent,
+    PropertiesComponent,
 
-        fieldComponents
-    ],
-    imports: [
-        BrowserModule,
-        HttpClientModule,
-        FormsModule,
-        ReactiveFormsModule,
+    fieldComponents
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule,
 
-        FormlyTabsModule,
-        FormlyBootstrapModule,
-        FormlyModule.forRoot(config),
+    FormlyTabsModule,
+    FormlyBootstrapModule,
+    FormlyModule.forRoot(config),
 
-        FormlyDesignerModule.forRoot(designerConfig)
-    ],
-    providers: [],
-    bootstrap: [AppComponent]
+    FormlyDesignerModule.forRoot(designerConfig)
+  ],
+  providers: [FieldsService, FormlyDesignerService],
+  bootstrap: [AppComponent]
 })
 export class AppModule { }
