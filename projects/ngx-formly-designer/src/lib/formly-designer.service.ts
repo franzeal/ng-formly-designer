@@ -3,7 +3,7 @@ import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { FormlyConfig, FormlyFieldConfig } from '@ngx-formly/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { FieldsService } from './fields.service';
-import { DESIGNER_WRAPPER_TYPES, FormlyDesignerConfig } from './formly-designer-config';
+import { DesignerTypeOption, DESIGNER_WRAPPER_TYPES, FormlyDesignerConfig } from './formly-designer-config';
 import { cloneDeep, get, isArray, isEmpty, isFunction, isString, set, unset } from './util';
 
 export enum FieldType {
@@ -162,12 +162,11 @@ export class FormlyDesignerService {
 
   /** Prunes field of unrecognized properties */
   createPrunedField(field: FormlyFieldConfig, fieldType = FieldType.Designer): FormlyFieldConfig {
-    const type = get(field, 'templateOptions.$fieldArray.type', field.type);
-    const designerType = this.designerConfig.types[type];
+    const designerType = this.getDesignerType(field);
     const pruned: FormlyFieldConfig = isEmpty(field.key) ? {} : { key: field.key };
 
     if (designerType) {
-      pruned.type = type;
+      pruned.type = designerType.name;
       if (fieldType === FieldType.Designer && field.templateOptions?.$designerId) {
         pruned.templateOptions = { $designerId: field.templateOptions.$designerId };
       }
@@ -232,6 +231,18 @@ export class FormlyDesignerService {
         }
       });
     }
+  }
+
+  private getDesignerType(field: FormlyFieldConfig): DesignerTypeOption {
+    const type = get(field, 'templateOptions.$fieldArray.type', field.type);
+    const designerType = this.designerConfig.types[type];
+    if (designerType) {
+      return designerType;
+    }
+    if (field.type === 'formly-group' || ((field.type == null || field.type === '') && isArray(field.fieldGroup))) {
+      return { name: field.type, fieldGroup: true, fields: [] };
+    }
+    return;
   }
 
   private replaceField(id: string, field: FormlyFieldConfig, fields: FormlyFieldConfig[]): boolean {

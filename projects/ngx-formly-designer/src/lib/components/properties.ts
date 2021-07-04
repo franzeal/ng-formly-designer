@@ -1,14 +1,14 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { FieldsService, FormlyDesignerService } from 'ngx-formly-designer';
-import { cloneDeep } from 'lodash-es';
+import { FieldsService, FormlyDesignerConfig, FormlyDesignerService } from '../';
+import { cloneDeep } from '../util';
 import { Subscription, timer } from 'rxjs';
 
 @Component({
-  selector: 'app-properties',
+  selector: 'formly-designer-properties',
   template: `
-    <formly-designer-field-editor #editor [hasContent]="true" [showType]="true" [showWrappers]="true" [formControl]="fieldEdit">
+    <formly-designer-field-editor #editor [fieldGroup]="fieldGroup" [hasContent]="true" [showType]="true" [showWrappers]="true" [formControl]="fieldEdit">
       <div class="footer">
         <button (click)="cancel()" class="btn btn-secondary mr-1">Cancel</button>
         <button [disabled]="editor.invalid" (click)="accept()" class="btn btn-primary">Apply</button>
@@ -19,6 +19,7 @@ import { Subscription, timer } from 'rxjs';
 export class PropertiesComponent implements OnInit, OnDestroy {
   private readonly subscriptions: Subscription[] = [];
 
+  fieldGroup = false;
   fieldEdit = new FormControl({});
   private field: FormlyFieldConfig = null;
 
@@ -27,6 +28,7 @@ export class PropertiesComponent implements OnInit, OnDestroy {
 
   constructor(
     private fieldsService: FieldsService,
+    private formlyDesignerConfig: FormlyDesignerConfig,
     private formlyDesignerService: FormlyDesignerService
   ) { }
 
@@ -66,6 +68,7 @@ export class PropertiesComponent implements OnInit, OnDestroy {
   private setField(field: FormlyFieldConfig): void {
     if (field !== this.field) {
       this.field = field || null;
+      this.fieldGroup = field?.type === 'formly-group' || this.formlyDesignerConfig.types[field?.type]?.fieldGroup;
       this.fieldEdit.setValue(field ? cloneDeep(field) : {});
     }
   }

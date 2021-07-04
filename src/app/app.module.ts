@@ -14,14 +14,12 @@ import { designerConfig } from './designer-config';
 
 import { AppComponent } from './app.component';
 import { ExpanderComponent } from './components/expander.component';
-import { PropertiesComponent } from './components/properties.component';
 import { FieldsService, FormlyDesignerService } from 'ngx-formly-designer';
 
 @NgModule({
   declarations: [
     AppComponent,
     ExpanderComponent,
-    PropertiesComponent,
 
     fieldComponents
   ],

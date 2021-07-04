@@ -9,6 +9,7 @@ import { FormlyDesignerComponent } from './formly-designer.component';
 import { DesignerConfigOption, FormlyDesignerConfig, FORMLY_DESIGNER_CONFIG_TOKEN } from './formly-designer-config';
 import { Config, fieldComponents, wrapperComponents } from './config';
 import { DesignerExtension } from './extensions/designer';
+import { PropertiesComponent } from './components/properties';
 import { TypeSelectComponent } from './components/type-select';
 import { WrapperEditorComponent } from './components/wrapper-editor';
 import { WrapperSelectComponent } from './components/wrapper-select';
@@ -22,6 +23,7 @@ import 'jquery';
     FieldEditorComponent,
     FieldPickerComponent,
     FormlyDesignerComponent,
+    PropertiesComponent,
     TypeSelectComponent,
     WrapperEditorComponent,
     WrapperSelectComponent,
@@ -43,6 +45,7 @@ import 'jquery';
   exports: [
     FieldEditorComponent,
     FormlyDesignerComponent,
+    PropertiesComponent,
     WrapperEditorComponent
   ],
   providers: [
