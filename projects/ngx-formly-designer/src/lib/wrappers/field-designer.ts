@@ -94,6 +94,11 @@ import { cloneDeep } from '../util';
       padding: 1.5em 1em 0 1em;
       width: 100%;
     }
+    .content:hover {
+      background-color: #f0f4c3;
+      border-color: #00c853;
+      cursor: pointer;
+    }
     .content:first-child {
       padding-top: 0;
     }
