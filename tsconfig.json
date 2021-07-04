@@ -29,5 +29,13 @@
         "dist/ngx-formly-designer/*"
       ]
     }
+  },
+  "angularCompilerOptions": {
+    "enableResourceInlining": true,
+    "skipTemplateCodegen": true,
+    "strictMetadataEmit": true,
+    "fullTemplateTypeCheck": true,
+    "strictInjectionParameters": true,
+    "strictTemplates": true
   }
 }
