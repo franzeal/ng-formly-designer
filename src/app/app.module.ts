@@ -35,7 +35,7 @@ import { FieldsService, FormlyDesignerService } from 'ngx-formly-designer';
 
     FormlyDesignerModule.forRoot(designerConfig)
   ],
-  providers: [FieldsService, FormlyDesignerService],
+  providers: [FormlyDesignerService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,22 +1,24 @@
-import { NgModule, ModuleWithProviders, ANALYZE_FOR_ENTRY_COMPONENTS } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ANALYZE_FOR_ENTRY_COMPONENTS, ModuleWithProviders, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormlyConfig, FormlyForm, FormlyModule } from '@ngx-formly/core';
+import 'jquery';
 import { FieldEditorComponent } from './components/field-editor';
 import { FieldPickerComponent } from './components/field-picker';
-import { FieldsService } from './fields.service';
-import { FormlyConfig, FormlyForm, FormlyModule } from '@ngx-formly/core';
-import { FormlyDesignerComponent } from './formly-designer.component';
-import { DesignerConfigOption, FormlyDesignerConfig, FORMLY_DESIGNER_CONFIG_TOKEN } from './formly-designer-config';
-import { Config, fieldComponents, wrapperComponents } from './config';
-import { DesignerExtension } from './extensions/designer';
 import { PropertiesComponent } from './components/properties';
 import { TypeSelectComponent } from './components/type-select';
+import { TypesComponent } from './components/types';
 import { WrapperEditorComponent } from './components/wrapper-editor';
-import { WrapperSelectComponent } from './components/wrapper-select';
 import { WrapperPickerComponent } from './components/wrapper-picker';
+import { WrapperSelectComponent } from './components/wrapper-select';
 import { WrappersPickerComponent } from './components/wrappers-picker';
+import { Config, fieldComponents, wrapperComponents } from './config';
+import { DragDropService } from './drag-drop.service';
+import { DesignerExtension } from './extensions/designer';
+import { FieldsService } from './fields.service';
+import { DesignerConfigOption, FormlyDesignerConfig, FORMLY_DESIGNER_CONFIG_TOKEN } from './formly-designer-config';
+import { FormlyDesignerComponent } from './formly-designer.component';
 import { DecyclePipe } from './pipes/decycle';
-import 'jquery';
 
 @NgModule({
   declarations: [
@@ -24,6 +26,7 @@ import 'jquery';
     FieldPickerComponent,
     FormlyDesignerComponent,
     PropertiesComponent,
+    TypesComponent,
     TypeSelectComponent,
     WrapperEditorComponent,
     WrapperSelectComponent,
@@ -46,11 +49,13 @@ import 'jquery';
     FieldEditorComponent,
     FormlyDesignerComponent,
     PropertiesComponent,
+    TypesComponent,
     WrapperEditorComponent
   ],
   providers: [
     Config,
     DesignerExtension,
+    DragDropService,
     FormlyDesignerConfig,
     FieldsService
   ],
