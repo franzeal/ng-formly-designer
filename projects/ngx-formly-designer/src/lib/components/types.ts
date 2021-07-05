@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormlyDesignerConfig } from '../';
-import { DragDropService } from '../drag-drop.service';
+import { DragDropService, FormlyDesignerConfig } from '../';
 
 @Component({
   selector: 'formly-designer-types',

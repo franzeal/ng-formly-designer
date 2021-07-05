@@ -3,8 +3,7 @@ import { ConfigOption } from '@ngx-formly/core';
 import { DesignerExtension } from './extensions/designer';
 import {
   DESIGNER_WRAPPER_NAME,
-  FIELD_DESIGNER_WRAPPER_NAME,
-  FIELD_GROUP_DESIGNER_WRAPPER_NAME
+  FIELD_DESIGNER_WRAPPER_NAME
 } from './formly-designer-config';
 import { FormlyDesignerWrapperComponent } from './wrappers/designer';
 import { FormlyDesignerFieldWrapperComponent } from './wrappers/field-designer';
@@ -28,7 +27,6 @@ export class Config implements ConfigOption {
     this.wrappers = [
       { name: DESIGNER_WRAPPER_NAME, component: FormlyDesignerWrapperComponent },
       { name: FIELD_DESIGNER_WRAPPER_NAME, component: FormlyDesignerFieldWrapperComponent },
-      { name: FIELD_GROUP_DESIGNER_WRAPPER_NAME, component: FormlyDesignerFieldGroupWrapperComponent }
     ];
     this.extensions = [
       { name: 'designer', extension: designerExtension }

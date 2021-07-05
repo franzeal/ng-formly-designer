@@ -1,15 +1,13 @@
-import { Injectable, Inject, InjectionToken } from '@angular/core';
+import { Inject, Injectable, InjectionToken } from '@angular/core';
 import { FormlyConfig, FormlyFieldConfig } from '@ngx-formly/core';
 
 export const FORMLY_DESIGNER_CONFIG_TOKEN = new InjectionToken<string>('FORMLY_DESIGNER_CONFIG_TOKEN');
 
 export const DESIGNER_WRAPPER_NAME = '$designer';
 export const FIELD_DESIGNER_WRAPPER_NAME = '$fieldDesigner';
-export const FIELD_GROUP_DESIGNER_WRAPPER_NAME = '$fieldGroupDesigner';
 export const DESIGNER_WRAPPER_TYPES = [
   DESIGNER_WRAPPER_NAME,
   FIELD_DESIGNER_WRAPPER_NAME,
-  FIELD_GROUP_DESIGNER_WRAPPER_NAME
 ];
 
 @Injectable()

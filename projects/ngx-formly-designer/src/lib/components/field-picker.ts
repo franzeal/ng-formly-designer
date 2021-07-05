@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DesignerTypeOption, FormlyDesignerConfig } from '../formly-designer-config';
+import { FormlyDesignerService } from '../formly-designer.service';
 
 @Component({
   selector: 'formly-designer-field-picker',
@@ -63,7 +64,8 @@ export class FieldPickerComponent {
 
   constructor(
     fb: FormBuilder,
-    private formlyDesignerConfig: FormlyDesignerConfig
+    private formlyDesignerConfig: FormlyDesignerConfig,
+    private formlyDesignerService: FormlyDesignerService,
   ) {
     this.form = fb.group({
       type: this.type = fb.control('', Validators.compose([Validators.required, Validators.pattern(/^\s*\S.*$/)]))
@@ -76,10 +78,7 @@ export class FieldPickerComponent {
   fieldGroup: boolean;
 
   get typeName(): string {
-    if (this.type.value === 'formly-group') {
-      return 'fieldGroup';
-    }
-    return this.type.value;
+    return this.formlyDesignerService.getTypeName(this.type.value);
   }
 
   private get $modal(): JQuery & { modal: (command: string) => void } {

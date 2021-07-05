@@ -237,6 +237,13 @@ export class FormlyDesignerService {
     return prunedFields;
   }
 
+  getTypeName(type: string): string {
+    if (type === 'formly-group') {
+      return 'fieldGroup';
+    }
+    return type;
+  }
+
   private applyProperties(field: FormlyFieldConfig, designed: FormlyFieldConfig, designerFields: FormlyFieldConfig[]): void {
     if (isArray(designerFields)) {
       designerFields.forEach(designerField => {

@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, forwardRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subscription, timer } from 'rxjs';
-import { FormlyDesignerConfig } from '../formly-designer-config';
+import { FormlyDesignerConfig } from '../';
 
 const TYPE_SELECT_CONTROL_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,

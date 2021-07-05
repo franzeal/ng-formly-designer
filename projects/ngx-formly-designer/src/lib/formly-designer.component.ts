@@ -13,9 +13,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { merge, NEVER, Observable, Subscription, timer } from 'rxjs';
 import { catchError, debounceTime, map, tap } from 'rxjs/operators';
-import { DragDropService } from './drag-drop.service';
-import { FieldsService } from './fields.service';
-import { FieldType, FormlyDesignerService } from './formly-designer.service';
+import { DragDropService, FieldsService, FieldType, FormlyDesignerService } from './';
 
 @Component({
   selector: 'formly-designer',

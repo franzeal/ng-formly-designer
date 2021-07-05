@@ -22,7 +22,6 @@ export class DragDropService {
 
   endDrag(): void {
     console.log('drag end');
-    console.assert(this._dragging.value !== null);
     this._dragging.next(null);
   }
 }

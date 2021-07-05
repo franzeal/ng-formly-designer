@@ -1,10 +1,9 @@
 import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { FieldsService } from '../fields.service';
-import { FormlyDesignerConfig } from '../formly-designer-config';
 import { merge, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { FieldsService, FormlyDesignerConfig } from '..';
 import { cloneDeep, isObject, isString } from '../util';
 
 const FIELD_EDITOR_CONTROL_VALUE_ACCESSOR: any = {

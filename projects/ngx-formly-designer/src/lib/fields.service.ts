@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DesignerOption, FormlyDesignerConfig } from './formly-designer-config';
-import { cloneDeep, equalType, generateUuid, getKeyPath, isArray, isObject } from './util';
+import { cloneDeep, equalType, generateUuid, getKeyPath, isArray, isString } from './util';
 
 @Injectable()
 export class FieldsService {
@@ -36,8 +36,10 @@ export class FieldsService {
   }
 
   checkField(field: FormlyFieldConfig, fields: FormlyFieldConfig[], parent?: FormlyFieldConfig): boolean {
+    if (field.key == null || (isString(field.key) && !field.key) || (isArray(field.key) && !field.key.length)) {
+      return true;
+    }
     const fullPathByField = new Map<FormlyFieldConfig, (string | number)[]>();
-
     const newPath = this.getFullKeyPath(parent || {}, fields).concat(getKeyPath(field));
     const length = newPath.length;
     return !this.traverseFields(fields, (f, p) => {
