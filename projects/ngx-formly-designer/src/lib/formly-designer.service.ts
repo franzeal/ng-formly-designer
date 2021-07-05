@@ -98,6 +98,21 @@ export class FormlyDesignerService {
     this.model = cloneDeep(this.model);
   }
 
+  createField(type: string): FormlyFieldConfig {
+    const field = {} as FormlyFieldConfig;
+    if (type !== 'formly-group') {
+      field.type = type;
+    }
+    const designerType = this.designerConfig.types[type] || {} as DesignerTypeOption;
+    if (designerType.fieldArray) {
+      field.fieldArray = { fieldGroup: [] };
+    }
+    if (type === 'formly-group' || designerType.fieldGroup) {
+      field.fieldGroup = [];
+    }
+    return field;
+  }
+
   didClickField(value: FormlyFieldConfig) {
     this._fieldClicked.next(value);
   }

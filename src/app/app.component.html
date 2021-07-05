@@ -6,7 +6,7 @@
     <formly-designer [model]="model" [fields]="fields" class="mt-4 mt-md-0 d-block" (modelChange)="onModelChange($event)"
       (fieldsChange)="onFieldsChange($event)">
     </formly-designer>
-    <div>
+    <div class="mt-4">
       Fields:
       <pre>{{ fieldsResult | json }}</pre>
 

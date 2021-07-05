@@ -1,13 +1,15 @@
-import { Component, HostListener, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { FieldWrapper } from '@ngx-formly/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { DragDropService } from '../drag-drop.service';
 import { FormlyDesignerService } from '../formly-designer.service';
 
 @Component({
   selector: 'formly-designer-field-wrapper',
   template: `
-    <div class="content" [ngClass]="{ 'drop-hint': (dragDropService.dragging$ | async) !== null, 'drop-target': dropTargetCounter > 0 }"
-      (dragenter)="onDragEnter($event)" (dragleave)="onDragLeave()" (drop)="onDrop($event)">
+    <div class="content" [ngClass]="{ 'drop-hint': isDragging$ | async, 'drop-target': dropTargetCounter > 0 }"
+      (dragenter)="onDragEnter($event)" (dragleave)="onDragLeave()" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
       <ng-template #fieldComponent></ng-template>
     </div>
   `,
@@ -18,35 +20,12 @@ import { FormlyDesignerService } from '../formly-designer.service';
       justify-content: flex-start;
       align-content: flex-start;
       align-items: flex-start;
-      margin: .25em;
-    }
-    :host.designerEmpty {
-      display:none;
-    }
-    .btn:not(:disabled), .dropdown-item:not(:disabled) {
-      cursor: pointer;
-    }
-    .control-panel {
-      font-size: .8em;
-      position: absolute;
-      padding: 0 0 0 .5em;
-      border-radius: 0 5px 0 0;
-      right: 0;
-      top: 0;
-    }
-    .control-panel > * {
-      padding-right: .5em;
-    }
-    .control-panel .btn {
-      font-size: unset;
-      background-color: unset;
-      padding: 0 .5em 0 0;
-      color: #fff;
+      margin: .25rem;
     }
     .content {
       border: 1px dashed #000;
       border-radius: 5px;
-      min-height: 2em;
+      min-height: 2rem;
       padding: 1.5em 1em 0 1em;
       width: 100%;
     }
@@ -66,25 +45,23 @@ import { FormlyDesignerService } from '../formly-designer.service';
     .content:first-child {
       padding-top: 0;
     }
-    .editor {
-      margin: 1em 0;
-    }
-    .footer {
-      display: flex;
-      justify-content: flex-end;
-    }
   `]
 })
-export class FormlyDesignerFieldWrapperComponent extends FieldWrapper {
+export class FormlyDesignerFieldWrapperComponent extends FieldWrapper implements OnInit {
   @ViewChild('fieldComponent', { read: ViewContainerRef, static: true }) fieldComponent: ViewContainerRef;
 
+  isDragging$: Observable<boolean>;
   dropTargetCounter = 0;
 
   constructor(
-    public dragDropService: DragDropService,
+    private dragDropService: DragDropService,
     private formlyDesignerService: FormlyDesignerService
   ) {
     super();
+  }
+
+  ngOnInit(): void {
+    this.isDragging$ = this.dragDropService.dragging$.pipe(map(dragging => dragging != null));
   }
 
   @HostListener('click')
@@ -103,8 +80,12 @@ export class FormlyDesignerFieldWrapperComponent extends FieldWrapper {
     }
   }
 
-  onDrop(event: DragEvent): void {
-    console.log(event);
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
   }
 
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    console.log(event);
+  }
 }

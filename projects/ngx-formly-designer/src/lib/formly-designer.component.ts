@@ -11,19 +11,25 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { merge, NEVER, Subscription, timer } from 'rxjs';
-import { catchError, debounceTime, tap } from 'rxjs/operators';
+import { merge, NEVER, Observable, Subscription, timer } from 'rxjs';
+import { catchError, debounceTime, map, tap } from 'rxjs/operators';
+import { DragDropService } from './drag-drop.service';
 import { FieldsService } from './fields.service';
 import { FieldType, FormlyDesignerService } from './formly-designer.service';
 
 @Component({
   selector: 'formly-designer',
   template: `
-    <formly-designer-field-picker (selected)="onFieldSelected($event)">
-    </formly-designer-field-picker>
     <form novalidate [formGroup]="form">
-      <formly-form [options]="options" [model]="model" [form]="form" [fields]="formlyDesignerService.designerFields$ | async">
+      <formly-form *ngIf="fields.length > 0; else placeholder" [options]="options" [model]="model" [form]="form" [fields]="formlyDesignerService.designerFields$ | async">
       </formly-form>
+      <ng-template #placeholder>
+        <div class="content d-flex justify-content-center align-items-center"
+          [ngClass]="{ 'drop-hint': isDragging$ | async, 'drop-target': dropTargetCounter > 0 }"
+          (dragenter)="onDragEnter($event)" (dragleave)="onDragLeave()" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+          <div>+</div>
+        </div>
+      </ng-template>
     </form>
     <!--<div>
       Designer Fields:
@@ -31,6 +37,27 @@ import { FieldType, FormlyDesignerService } from './formly-designer.service';
     </div>-->
   `,
   styles: [`
+    formly-designer > form > .content {
+      border: 1px dashed #000;
+      border-radius: 5px;
+      min-height: 2rem;
+      padding: 1.5em 1em 0 1em;
+      width: 100%;
+    }
+    formly-designer > form > .content.drop-hint {
+      background-color: #e3f2fd;
+      border-color: #bbdefb;
+    }
+    formly-designer > form > .content.drop-target {
+      background-color: #f0f4c3;
+      border-color: #00c853;
+    }
+    formly-designer > form > .content > div {
+      padding: 2rem;
+      padding-bottom: 4rem;
+      font-size: 64pt;
+      pointer-events: none;
+    }
     formly-designer-field-picker .form-group > .input-group > formly-designer-type-select > select {
       border-radius: .25rem 0 0 .25rem;
       border-right: 0;
@@ -54,6 +81,8 @@ export class FormlyDesignerComponent implements OnDestroy, OnInit {
   wrappers: string[] = [];
   properties: string[] = [];
   debugFields: FormlyFieldConfig[] = [];
+  isDragging$: Observable<boolean>;
+  dropTargetCounter = 0;
 
   form: FormGroup;
   options: any = {};
@@ -61,6 +90,7 @@ export class FormlyDesignerComponent implements OnDestroy, OnInit {
   private readonly subscriptions: Subscription[] = [];
 
   constructor(
+    private dragDropService: DragDropService,
     private fieldsService: FieldsService,
     private formBuilder: FormBuilder,
     public formlyDesignerService: FormlyDesignerService
@@ -97,6 +127,7 @@ export class FormlyDesignerComponent implements OnDestroy, OnInit {
     // Editor forms will be restricted to a single field depth; all designer keys should be
     // complex (e.g. "templateOptions.some.property")
     this.form = this.formBuilder.group({});
+    this.isDragging$ = this.dragDropService.dragging$.pipe(map(dragging => dragging != null));
 
     this.subscriptions.push(this.formlyDesignerService.designerFields$
       .subscribe(fields => {
@@ -125,5 +156,32 @@ export class FormlyDesignerComponent implements OnDestroy, OnInit {
         }
       }),
       catchError(() => NEVER)).subscribe();
+  }
+
+  onDragEnter(event: DragEvent): void {
+    event.preventDefault();
+    this.dropTargetCounter++;
+  }
+
+  onDragLeave(): void {
+    if (this.dropTargetCounter > 0) {
+      this.dropTargetCounter--;
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  onDrop(event: DragEvent): void {
+    if (this.fields.length) {
+      return;
+    }
+    if (typeof this.dragDropService.dragging !== 'string') {
+      return;
+    }
+    const field = this.formlyDesignerService.createField(this.dragDropService.dragging);
+    this.formlyDesignerService.addField(field);
+    event.preventDefault();
   }
 }
